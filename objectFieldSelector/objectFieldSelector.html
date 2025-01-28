@@ -1,0 +1,84 @@
+<template>
+    <lightning-card title="Object and Field Selector" icon-name="utility:settings">
+        <div class="slds-m-around_medium">
+            <!-- Input Section -->
+            <template if:false={showRecords}>
+                <!-- Object Selection -->
+                <lightning-combobox
+                    label="Select Object"
+                    value={selectedObject}
+                    placeholder="Choose an object"
+                    options={objectOptions}
+                    onchange={handleObjectChange}>
+                </lightning-combobox>
+
+                <!-- Field Selection -->
+                <template if:true={fieldOptions}>
+                    <lightning-dual-listbox
+                        name="fields"
+                        label="Select Fields"
+                        source-label="Available Fields"
+                        selected-label="Selected Fields"
+                        options={fieldOptions}
+                        value={selectedFields}
+                        onchange={handleFieldChange}>
+                    </lightning-dual-listbox>
+                </template>
+
+                <!-- WHERE Clause Input -->
+                <lightning-input
+                    label="Enter WHERE Clause (Optional)"
+                    placeholder="Example: Name LIKE 'John%'"
+                    onchange={handleWhereClauseChange}>
+                </lightning-input>
+
+                <!-- Fetch Records Button -->
+                <lightning-button
+                    label="Fetch Records"
+                    variant="brand"
+                    class="slds-m-top_small"
+                    onclick={fetchRecords}>
+                </lightning-button>
+            </template>
+
+            <!-- Records Section -->
+            <template if:true={showRecords}>
+                <!-- Back Button -->
+                <lightning-button
+                    label="Back"
+                    variant="neutral"
+                    class="slds-m-bottom_small"
+                    onclick={handleBack}>
+                </lightning-button>
+
+                <!-- Loader -->
+                <template if:true={isLoading}>
+                    <div class="slds-is-relative slds-p-around_medium">
+                        <lightning-spinner alternative-text="Loading"></lightning-spinner>
+                    </div>
+                </template>
+
+                <!-- Display Records -->
+                <template if:true={records}>
+                    <template for:each={records} for:item="record">
+                        <div key={record.id} class="slds-box slds-m-top_small record-container">
+                            <!-- Title Field with Blue Hyperlink -->
+                            <h2 class="record-title">
+                                <a href={record.url} target="_blank" class="record-link">
+                                    {record.titleFieldValue}
+                                </a>
+                            </h2>
+
+                            <!-- Display Remaining Fields -->
+                            <template for:each={record.fields} for:item="field">
+                                <p key={field.name} class="record-field">
+                                    <b>{field.name}:</b> {field.value}
+                                </p>
+                            </template>
+                        </div>
+                    </template>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>
