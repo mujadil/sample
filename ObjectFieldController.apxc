@@ -1,0 +1,63 @@
+public with sharing class ObjectFieldController {
+    @AuraEnabled
+    public static List<String> getSObjects() {
+        // Fetch all available objects
+        Map<String, Schema.SObjectType> schemaMap = Schema.getGlobalDescribe();
+        List<String> objects = new List<String>();
+        for (String key : schemaMap.keySet()) {
+            objects.add(key);
+        }
+        return objects;
+    }
+
+    @AuraEnabled
+    public static List<String> getFields(String sObjectName) {
+        // Describe the object and fetch fields
+        try {
+            Schema.SObjectType objType = Schema.getGlobalDescribe().get(sObjectName);
+            Map<String, Schema.SObjectField> fieldMap = objType.getDescribe().fields.getMap();
+            return new List<String>(fieldMap.keySet());
+        } catch (Exception e) {
+            System.debug('Error fetching fields: ' + e.getMessage());
+            throw new AuraHandledException('Unable to fetch fields for ' + sObjectName);
+        }
+    }
+
+    @AuraEnabled
+    public static List<Map<String, Object>> getRecords(String sObjectName, List<String> fieldNames, String whereClause) {
+        if (String.isBlank(sObjectName)) {
+            throw new AuraHandledException('Object name cannot be blank.');
+        }
+
+        if (fieldNames == null || fieldNames.isEmpty()) {
+            throw new AuraHandledException('Field names cannot be empty.');
+        }
+
+        try {
+            // Build SOQL query
+            String query = 'SELECT ' + String.join(fieldNames, ',') + ' FROM ' + sObjectName;
+            if (!String.isBlank(whereClause)) {
+                query += ' WHERE ' + whereClause;
+            }
+            System.debug('SOQL Query: ' + query);
+
+            // Execute query
+            List<SObject> records = Database.query(query);
+            System.debug('Records fetched: ' + records.size());
+
+            // Convert records to map
+            List<Map<String, Object>> results = new List<Map<String, Object>>();
+            for (SObject record : records) {
+                Map<String, Object> recordMap = new Map<String, Object>();
+                for (String fieldName : fieldNames) {
+                    recordMap.put(fieldName, record.get(fieldName));
+                }
+                results.add(recordMap);
+            }
+            return results;
+        } catch (Exception e) {
+            System.debug('Error fetching records: ' + e.getMessage());
+            throw new AuraHandledException('Error fetching records: ' + e.getMessage());
+        }
+    }
+}
